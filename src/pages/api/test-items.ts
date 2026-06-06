@@ -10,62 +10,60 @@ interface CloudflareLocals {
   };
 }
 
-export async function GET({ locals, request }: APIContext & { locals: CloudflareLocals }) {
-  // Check authentication
+export async function GET({ request }: APIContext) {
   if (!verifyAuth(request)) {
     return unauthorizedResponse();
   }
 
   const db = env.DB;
-  
-  const testResults = {
-    setup: { success: false, message: '' },
-    createTest: { success: false, message: '', id: null },
-    readTest: { success: false, message: '', data: null },
-    updateTest: { success: false, message: '' },
-    deleteTest: { success: false, message: '' },
-    cleanup: { success: false, message: '' }
+
+  const testResults: any = {
+    setup: {},
+    createTest: {},
+    readTest: {},
+    updateTest: {},
+    deleteTest: {},
   };
-  
+
   try {
-    // 1. Setup - ensure the table exists
-    try {
-      await db.prepare(`
-        CREATE TABLE IF NOT EXISTS items (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT,
-          description TEXT
-        )
-      `).run();
-      testResults.setup = { success: true, message: 'Table setup successful' };
-      
-      // Run through all CRUD operations to test
-      // See full implementation in the source code
-      
-    } catch (error) {
-      testResults.setup = { 
-        success: false, 
-        message: `Table setup failed: ${error instanceof Error ? error.message : String(error)}` 
-      };
-    }
-    
+    // 1. Setup
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        description TEXT
+      )
+    `).run();
+
+    testResults.setup = { success: true };
+
+    // 2. CREATE (THIS WAS MISSING)
+    const insert = await db.prepare(
+      "INSERT INTO items (name, description) VALUES (?, ?)"
+    ).bind("Test Item", "Hello").run();
+
+    testResults.createTest = {
+      success: true,
+      id: insert.meta?.last_row_id,
+    };
+
+    // 3. READ
+    const read = await db.prepare("SELECT * FROM items").all();
+
+    testResults.readTest = {
+      success: true,
+      data: read.results,
+    };
+
     return new Response(JSON.stringify({
       message: "CRUD Test completed",
       results: testResults,
-      time: new Date().toISOString()
-    }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    console.error('Test error:', error);
-    return new Response(JSON.stringify({ 
-      error: 'Test failed', 
-      message: error instanceof Error ? error.message : String(error),
-      results: testResults
-    }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    }));
+
+  } catch (err) {
+    return new Response(JSON.stringify({
+      error: String(err),
+      results: testResults,
+    }), { status: 500 });
   }
 }
