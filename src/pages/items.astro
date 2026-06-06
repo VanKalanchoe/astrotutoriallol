@@ -88,8 +88,64 @@ const authParam = new URL(Astro.request.url).searchParams.get('auth') || '';
 
     <!-- Client-side JavaScript for CRUD operations -->
     <script define:vars={{ authParam }}>
-      // JavaScript code for handling forms, modals, and CRUD operations
-      // See full implementation in the source code
-    </script>
+  const form = document.getElementById("itemForm");
+  const list = document.getElementById("itemsList");
+
+  // CREATE
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+
+    const res = await fetch(`/api/items?auth=${authParam}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: formData.get("name"),
+        description: formData.get("description")
+      })
+    });
+
+    location.reload();
+  });
+
+  // DELETE (event delegation)
+  list?.addEventListener("click", async (e) => {
+    const target = e.target;
+
+    // DELETE
+    if (target.classList.contains("delete-btn")) {
+      const id = target.closest(".item-row").dataset.id;
+
+      await fetch(`/api/items/${id}?auth=${authParam}`, {
+        method: "DELETE"
+      });
+
+      location.reload();
+    }
+
+    // EDIT (simple prompt version)
+    if (target.classList.contains("edit-btn")) {
+      const row = target.closest(".item-row");
+      const id = row.dataset.id;
+
+      const newName = prompt("New name:");
+      const newDesc = prompt("New description:");
+
+      if (!newName) return;
+
+      await fetch(`/api/items/${id}?auth=${authParam}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newName,
+          description: newDesc
+        })
+      });
+
+      location.reload();
+    }
+  });
+</script>
   </div>
 </Layout>
