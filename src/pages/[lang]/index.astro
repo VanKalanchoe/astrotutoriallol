@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Greeting from '../../components/Greeting';
+
+import { getLang, t, langStaticPaths } from "../../i18n";
+
+export const getStaticPaths = langStaticPaths;
+
+const lang = getLang(Astro);
+const dict = t(lang);
+
+const pageTitle = dict.page.homeTitle;
+---
+<BaseLayout pageTitle={pageTitle} lang={lang}>
+  <h2>My awesome blog subtitle</h2>
+  <Greeting client:load messages={["Hej", "Hallo", "Hola", "Habari"]} />
+</BaseLayout>

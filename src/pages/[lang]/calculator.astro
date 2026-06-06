@@ -1,0 +1,863 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getLang, t, langStaticPaths } from "../../i18n";
+
+export const getStaticPaths = langStaticPaths;
+
+const lang = getLang(Astro);
+const dict = t(lang);
+
+const pageTitle = dict.page.calculatorTitle;
+---
+
+<BaseLayout pageTitle={pageTitle}>
+  <style is:global>
+    @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+    body {
+      max-width: 75%;
+    }
+    .calc-subtitle {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-style: italic;
+      color: #64748b;
+      font-size: 1.1rem;
+      margin: -0.25rem 0 2rem;
+    }
+    html.dark .calc-subtitle {
+      color: #94a3b8;
+    }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.75rem;
+    }
+    @media (max-width: 580px) {
+      .calc-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ── Form Panel ── */
+    .calc-form-panel {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 1.25rem;
+    }
+    html.dark .calc-form-panel {
+      background: #100d6a;
+      border-color: #1e1a8a;
+    }
+
+    .calc-panel-title {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0d0950;
+      margin: 0 0 1.25rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 2px solid #ff9776;
+    }
+    html.dark .calc-panel-title {
+      color: #e2e8f0;
+    }
+
+    .calc-field {
+      margin-bottom: 1rem;
+    }
+
+    .calc-label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #64748b;
+      margin-bottom: 0.35rem;
+    }
+    html.dark .calc-label {
+      color: #8892aa;
+    }
+
+    .calc-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .calc-affix {
+      position: absolute;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #0d0950;
+      pointer-events: none;
+      z-index: 1;
+    }
+    html.dark .calc-affix {
+      color: #8892aa;
+    }
+    .calc-affix-left {
+      left: 0.65rem;
+    }
+    .calc-affix-right {
+      right: 0.65rem;
+    }
+
+    .calc-input,
+    .calc-select {
+      width: 100%;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.95rem;
+      color: #0d0950;
+      background: #f8fafc;
+      transition:
+        border-color 0.18s,
+        box-shadow 0.18s;
+    }
+    .calc-input.has-prefix {
+      padding-left: 2rem;
+    }
+    .calc-input.has-suffix {
+      padding-right: 2.5rem;
+    }
+    .calc-input:focus,
+    .calc-select:focus {
+      outline: none;
+      border-color: #ff9776;
+      box-shadow: 0 0 0 3px rgba(255, 151, 118, 0.2);
+      background: #fff;
+    }
+    html.dark .calc-input,
+    html.dark .calc-select {
+      background: #0d0950;
+      border-color: #1e1a8a;
+      color: #e2e8f0;
+    }
+    html.dark .calc-input:focus,
+    html.dark .calc-select:focus {
+      background: #08063c;
+      border-color: #ff9776;
+    }
+
+    .calc-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%230d0950' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      padding-right: 2rem;
+      cursor: pointer;
+    }
+    html.dark .calc-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23e2e8f0' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+    }
+
+    .calc-btn {
+      width: 100%;
+      margin-top: 0.5rem;
+      padding: 0.75rem;
+      background: #0d0950;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      cursor: pointer;
+      transition:
+        background 0.18s,
+        transform 0.1s;
+    }
+    .calc-btn:hover {
+      background: #1a157a;
+    }
+    .calc-btn:active {
+      transform: scale(0.98);
+    }
+    html.dark .calc-btn {
+      background: #ff9776;
+      color: #0d0950;
+    }
+    html.dark .calc-btn:hover {
+      background: #ff7a55;
+    }
+
+    /* ── Results Panel ── */
+    .calc-results-panel {
+      background: #0d0950;
+      border-radius: 6px;
+      padding: 1.25rem;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+    html.dark .calc-results-panel {
+      background: #060422;
+      border: 1px solid #1e1a6e;
+    }
+    .calc-results-panel .calc-panel-title {
+      color: #ff9776;
+      border-color: rgba(255, 151, 118, 0.3);
+    }
+
+    .calc-results-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      color: rgba(255, 255, 255, 0.25);
+      text-align: center;
+      padding: 1.5rem 0;
+    }
+    .calc-empty-icon {
+      width: 44px;
+      height: 44px;
+    }
+    .calc-empty-text {
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+
+    .calc-results-content {
+      display: none;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .calc-results-content.visible {
+      display: flex;
+    }
+
+    .calc-metric {
+      padding-bottom: 0.9rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .calc-metric:last-of-type {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .calc-metric-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: rgba(255, 255, 255, 0.45);
+      margin-bottom: 0.2rem;
+    }
+
+    .calc-metric-value {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+    .calc-metric-value.primary {
+      color: #ff9776;
+      font-size: 2rem;
+    }
+
+    /* Composition bar */
+    .calc-comp {
+      margin-top: 0.25rem;
+    }
+    .calc-comp-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: rgba(255, 255, 255, 0.45);
+      margin-bottom: 0.45rem;
+    }
+    .calc-comp-track {
+      height: 7px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      margin-bottom: 0.45rem;
+      position: relative;
+    }
+    .calc-comp-bar {
+      height: 100%;
+      background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.35) 0%,
+        rgba(255, 255, 255, 0.35) 60%,
+        #ff9776 60%
+      );
+      width: 100%;
+      transition: background 0.7s ease;
+    }
+    .calc-comp-legend {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.68rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+    .calc-legend-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 0.3rem;
+    }
+
+    /* ── Breakdown Table ── */
+    .calc-breakdown {
+      margin-top: 0.25rem;
+    }
+    .calc-breakdown-title {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0d0950;
+      margin: 0 0 1rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 2px solid #ff9776;
+    }
+    html.dark .calc-breakdown-title {
+      color: #e2e8f0;
+    }
+
+    .calc-table-wrap {
+      overflow-x: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+    }
+    html.dark .calc-table-wrap {
+      border-color: #1e1a6e;
+    }
+
+    .calc-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.8rem;
+    }
+
+    .calc-table th {
+      padding: 0.55rem 0.75rem;
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: #64748b;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .calc-table th:first-child {
+      text-align: left;
+    }
+    html.dark .calc-table th {
+      background: #080535;
+      color: #5a6280;
+      border-color: #1e1a6e;
+    }
+
+    .calc-table td {
+      padding: 0.45rem 0.75rem;
+      text-align: right;
+      border-bottom: 1px solid #f0f4f8;
+      color: #334155;
+    }
+    .calc-table td:first-child {
+      text-align: left;
+      font-weight: 700;
+      color: #0d0950;
+    }
+    .calc-table tr:last-child td {
+      border-bottom: none;
+    }
+    .calc-table tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+    html.dark .calc-table td {
+      border-color: #0e0b52;
+      color: #c0cce0;
+    }
+    html.dark .calc-table td:first-child {
+      color: #e2e8f0;
+    }
+    html.dark .calc-table tr:nth-child(even) td {
+      background: #080535;
+    }
+
+    .calc-table .interest {
+      color: #c94a1a;
+      font-weight: 500;
+    }
+    html.dark .calc-table .interest {
+      color: #ff9776;
+    }
+
+    .calc-table-empty {
+      text-align: center !important;
+      padding: 2.5rem 1rem !important;
+      color: #94a3b8;
+      font-family: sans-serif;
+      font-size: 0.85rem;
+    }
+  </style>
+
+  <p class="calc-subtitle">
+    Plan your savings &amp; investments with compound growth projections
+  </p>
+
+  <div class="calc-grid">
+    <!-- Input Form -->
+    <div class="calc-form-panel">
+      <h2 class="calc-panel-title">Parameters</h2>
+
+      <div class="calc-field">
+        <label class="calc-label" for="calc-startCapital"
+          >Starting Capital</label
+        >
+        <div class="calc-input-wrap">
+          <span class="calc-affix calc-affix-left">€</span>
+          <input
+            class="calc-input has-prefix"
+            type="text"
+            id="calc-startCapital"
+            value="10.000,00"
+          />
+        </div>
+      </div>
+
+      <div class="calc-field">
+        <label class="calc-label" for="calc-monthlySaving"
+          >Monthly Contribution</label
+        >
+        <div class="calc-input-wrap">
+          <span class="calc-affix calc-affix-left">€</span>
+          <input
+            class="calc-input has-prefix"
+            type="text"
+            id="calc-monthlySaving"
+            value="200,00"
+          />
+        </div>
+      </div>
+
+      <div class="calc-field">
+        <label class="calc-label" for="calc-period">Investment Period</label>
+        <div class="calc-input-wrap">
+          <input
+            class="calc-input has-suffix"
+            type="number"
+            id="calc-period"
+            value="20"
+            min="1"
+            max="999"
+            step="1"
+          />
+          <span class="calc-affix calc-affix-right">yrs</span>
+        </div>
+      </div>
+
+      <div class="calc-field">
+        <label class="calc-label" for="calc-rate">Annual Interest Rate</label>
+        <div class="calc-input-wrap">
+          <input
+            class="calc-input has-suffix"
+            type="text"
+            id="calc-rate"
+            value="7,00"
+          />
+          <span class="calc-affix calc-affix-right">%</span>
+        </div>
+      </div>
+
+      <div class="calc-field">
+        <label class="calc-label" for="calc-interval">Payout Interval</label>
+        <select class="calc-select" id="calc-interval">
+          <option value="monthly">Monthly</option>
+          <option value="quarterly">Quarterly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+      </div>
+
+      <button class="calc-btn" id="calc-btn">Calculate</button>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="calc-results-panel">
+      <h2 class="calc-panel-title">Projection</h2>
+
+      <div class="calc-results-empty" id="calc-empty">
+        <svg
+          class="calc-empty-icon"
+          viewBox="0 0 44 44"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            x="4"
+            y="28"
+            width="7"
+            height="12"
+            rx="1"
+            fill="currentColor"
+            opacity="0.3"></rect>
+          <rect
+            x="14"
+            y="20"
+            width="7"
+            height="20"
+            rx="1"
+            fill="currentColor"
+            opacity="0.5"></rect>
+          <rect
+            x="24"
+            y="12"
+            width="7"
+            height="28"
+            rx="1"
+            fill="currentColor"
+            opacity="0.75"></rect>
+          <rect x="34" y="4" width="7" height="36" rx="1" fill="currentColor"
+          ></rect>
+          <line
+            x1="2"
+            y1="42"
+            x2="42"
+            y2="42"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"></line>
+        </svg>
+        <p class="calc-empty-text">
+          Enter parameters and<br />click Calculate to see results
+        </p>
+      </div>
+
+      <div class="calc-results-content" id="calc-results">
+        <div class="calc-metric">
+          <div class="calc-metric-label">Final Balance</div>
+          <div class="calc-metric-value primary" id="r-final">—</div>
+        </div>
+        <div class="calc-metric">
+          <div class="calc-metric-label">Total Invested</div>
+          <div class="calc-metric-value" id="r-invested">—</div>
+        </div>
+        <div class="calc-metric">
+          <div class="calc-metric-label">Interest Earned</div>
+          <div class="calc-metric-value" id="r-interest">—</div>
+        </div>
+        <div class="calc-comp">
+          <div class="calc-comp-label">Portfolio Composition</div>
+          <div class="calc-comp-track">
+            <div class="calc-comp-bar" id="calc-comp-bar"></div>
+          </div>
+          <div class="calc-comp-legend">
+            <span>
+              <span
+                class="calc-legend-dot"
+                style="background: rgba(255,255,255,0.35)"></span>Invested
+            </span>
+            <span>
+              <span class="calc-legend-dot" style="background: #ff9776"
+              ></span>Interest
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Year-by-Year Table -->
+  <div class="calc-breakdown">
+    <h2 class="calc-breakdown-title" id="calc-breakdown-title">
+      Year-by-Year Breakdown
+    </h2>
+    <div class="calc-table-wrap">
+      <table class="calc-table">
+        <thead>
+          <tr>
+            <th id="calc-period-header">Year</th>
+            <th>End Balance</th>
+            <th>Total Invested</th>
+            <th>Total Interest</th>
+            <th id="calc-interest-header">Interest (Year)</th>
+            <th>Override Rate %</th>
+          </tr>
+        </thead>
+        <tbody id="calc-tbody">
+          <tr>
+            <td colspan="6" class="calc-table-empty">
+              No data yet — enter your parameters and press Calculate.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let calcTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    function scheduleCalc() {
+      if (calcTimeout !== null) clearTimeout(calcTimeout);
+      calcTimeout = setTimeout(runCalculation, 100);
+    }
+    const fmt = (n: number) =>
+      new Intl.NumberFormat("de-DE", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(n);
+
+    const parseGerman = (value: string) => {
+      return (
+        parseFloat(String(value).replace(/\./g, "").replace(",", ".")) || 0
+      );
+    };
+
+    const overrides = new Map<number, number>();
+
+    function runCalculation() {
+      function getOverrideKey(month: number, compoundEveryMonths: number) {
+        return Math.ceil(month / compoundEveryMonths);
+      }
+      const startEl = document.getElementById(
+        "calc-startCapital",
+      ) as HTMLInputElement | null;
+      const monthlyEl = document.getElementById(
+        "calc-monthlySaving",
+      ) as HTMLInputElement | null;
+      const periodEl = document.getElementById(
+        "calc-period",
+      ) as HTMLInputElement | null;
+      const rateEl = document.getElementById(
+        "calc-rate",
+      ) as HTMLInputElement | null;
+      const intervalEl = document.getElementById(
+        "calc-interval",
+      ) as HTMLSelectElement | null;
+
+      const resultFinal = document.getElementById("r-final");
+      const resultInvested = document.getElementById("r-invested");
+      const resultInterest = document.getElementById("r-interest");
+      const bar = document.getElementById("calc-comp-bar");
+      const empty = document.getElementById("calc-empty");
+      const results = document.getElementById("calc-results");
+      const title = document.getElementById("calc-breakdown-title");
+      const periodHeader = document.getElementById("calc-period-header");
+      const interestHeader = document.getElementById("calc-interest-header");
+
+      // safety guard (prevents runtime crashes)
+      if (
+        !startEl ||
+        !monthlyEl ||
+        !periodEl ||
+        !rateEl ||
+        !intervalEl ||
+        !resultFinal ||
+        !resultInvested ||
+        !resultInterest ||
+        !bar ||
+        !empty ||
+        !results ||
+        !tbody ||
+        !title ||
+        !periodHeader ||
+        !interestHeader
+      )
+        return;
+      const startCapital = Math.max(0, parseGerman(startEl.value) || 0);
+
+      const monthlySaving = Math.max(0, parseGerman(monthlyEl.value) || 0);
+
+      const years = Math.min(50, Math.max(1, parseInt(periodEl.value) || 1));
+
+      const annualRate = Math.max(0, parseGerman(rateEl.value) || 0);
+
+      const interval = intervalEl.value;
+
+      let periodsPerYear;
+      let contributionPerPeriod;
+      let periodLabel;
+      let interestColLabel;
+      let breakdownTitle;
+
+      if (interval === "monthly") {
+        periodsPerYear = 12;
+        contributionPerPeriod = monthlySaving;
+        periodLabel = "Month";
+        interestColLabel = "Interest (Month)";
+        breakdownTitle = "Month-by-Month Breakdown";
+      } else if (interval === "quarterly") {
+        periodsPerYear = 4;
+        contributionPerPeriod = monthlySaving * 3;
+        periodLabel = "Quarter";
+        interestColLabel = "Interest (Quarter)";
+        breakdownTitle = "Quarter-by-Quarter Breakdown";
+      } else {
+        periodsPerYear = 1;
+        contributionPerPeriod = monthlySaving * 12;
+        periodLabel = "Year";
+        interestColLabel = "Interest (Year)";
+        breakdownTitle = "Year-by-Year Breakdown";
+      }
+
+      const periodRate = annualRate / periodsPerYear / 100;
+      const totalPeriods = years * periodsPerYear;
+
+      let balance = startCapital;
+      let totalInvested = startCapital;
+      let prevTotalInterest = 0;
+      let accruedInterest = 0;
+
+      const rows = [];
+
+      let compoundEveryMonths;
+
+      if (interval === "monthly") {
+        compoundEveryMonths = 1;
+      } else if (interval === "quarterly") {
+        compoundEveryMonths = 3;
+      } else {
+        compoundEveryMonths = 12;
+      }
+
+      for (let month = 1; month <= years * 12; month++) {
+        // monthly deposit always happens
+        balance += monthlySaving;
+        totalInvested += monthlySaving;
+
+        // accumulate interest but don't credit it yet
+        const key = getOverrideKey(month, compoundEveryMonths);
+        const overrideRate = overrides.get(key);
+        const yearRate = overrideRate ?? annualRate;
+
+        accruedInterest += balance * (yearRate / 100 / 12);
+        // credit interest at selected interval
+        if (month % compoundEveryMonths === 0) {
+          balance += accruedInterest;
+          accruedInterest = 0;
+        }
+
+        // reporting row
+        if (month % compoundEveryMonths === 0) {
+          const totalInterestNow = balance - totalInvested;
+          const periodInterest = totalInterestNow - prevTotalInterest;
+
+          prevTotalInterest = totalInterestNow;
+
+          rows.push({
+            period: month / compoundEveryMonths,
+            key,
+            balance,
+            totalInvested,
+            totalInterest: totalInterestNow,
+            periodInterest,
+            overrideRate: overrides.get(key) ?? "",
+          });
+        }
+      }
+
+      const totalInterest = balance - totalInvested;
+      const depositPct =
+        totalInvested > 0 ? (totalInvested / balance) * 100 : 100;
+
+      resultFinal.textContent = "€ " + fmt(balance);
+
+      resultInvested.textContent = "€ " + fmt(totalInvested);
+
+      resultInterest.textContent = "€ " + fmt(totalInterest);
+
+      bar.style.background = `linear-gradient(to right,
+      rgba(255,255,255,0.35) ${depositPct}%,
+      #ff9776 ${depositPct}%)`;
+
+      empty.style.display = "none";
+      results.classList.add("visible");
+
+      title.textContent = breakdownTitle;
+
+      periodHeader.textContent = periodLabel;
+
+      interestHeader.textContent = interestColLabel;
+
+      tbody.innerHTML = "";
+
+      for (const row of rows) {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML =
+          `<td>${periodLabel} ${row.period}</td>` +
+          `<td>€ ${fmt(row.balance)}</td>` +
+          `<td>€ ${fmt(row.totalInvested)}</td>` +
+          `<td class="interest">€ ${fmt(row.totalInterest)}</td>` +
+          `<td class="interest">+ € ${fmt(row.periodInterest)}</td>` +
+          `<td>
+  <input
+    class="override-rate"
+    data-key="${row.key}"
+    value="${row.overrideRate}"
+    placeholder="-"
+    style="
+      width:70px;
+      text-align:right;
+      padding:0.25rem;
+    "
+  />
+</td>`;
+
+        tbody.appendChild(tr);
+      }
+    }
+
+    ["calc-startCapital", "calc-monthlySaving", "calc-rate"].forEach((id) => {
+      const input = document.getElementById(id) as HTMLInputElement | null;
+
+      if (!input) return;
+
+      input.addEventListener("blur", () => {
+        const value = parseGerman(input.value);
+        input.value = fmt(value);
+      });
+    });
+
+    const btn = document.getElementById("calc-btn") as HTMLButtonElement | null;
+
+    if (btn) {
+      btn.addEventListener("click", runCalculation);
+    }
+
+    const tbody = document.getElementById("calc-tbody");
+
+    if (tbody) {
+      tbody.addEventListener("input", (e) => {
+        const target = e.target;
+
+        if (!(target instanceof HTMLInputElement)) return;
+        if (!target.classList.contains("override-rate")) return;
+
+        const key = Number(target.dataset.key);
+        const value = parseGerman(target.value);
+
+        if (!value) {
+          overrides.delete(key);
+        } else {
+          overrides.set(key, value);
+        }
+
+        scheduleCalc();
+      });
+    }
+
+    // Show default result on page load
+    runCalculation();
+  </script>
+</BaseLayout>

@@ -1,7 +1,14 @@
 ---
-import BaseLayout from "../layouts/BaseLayout.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
 
-const pageTitle = "About Me";
+import { getLang, t, langStaticPaths } from "../../i18n";
+
+export const getStaticPaths = langStaticPaths;
+
+const lang = getLang(Astro);
+const dict = t(lang);
+
+const pageTitle = dict.page.aboutTitle;
 
 const identity = {
   firstName: "Sarah",

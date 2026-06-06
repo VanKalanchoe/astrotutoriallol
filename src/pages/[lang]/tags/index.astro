@@ -1,0 +1,52 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getLang, t } from "../../../i18n";
+
+export async function getStaticPaths() {
+  const allPosts = await getCollection("blog");
+
+  const tags = [...new Set(allPosts.flatMap((p: any) => p.data.tags))];
+
+  const langs = ["en", "de"] as const;
+
+  return langs.flatMap((lang) =>
+    tags.map((tag) => ({
+      params: { lang, tag },
+    }))
+  );
+}
+
+const lang = getLang(Astro);
+const dict = t(lang);
+
+const allPosts = await getCollection("blog");
+const tags = [...new Set(allPosts.map((post: any) => post.data.tags).flat())] as string[];
+const pageTitle = dict.page.tagsTitle ?? dict.nav.tags;
+---
+<BaseLayout pageTitle={pageTitle}>
+  <div class="tags">
+    {tags.map((tag) => (
+      <p class="tag"><a href={`/${lang}/tags/${tag}`}>{tag}</a></p>
+    ))}
+  </div>
+</BaseLayout>
+<style>
+  a {
+    color: #00539F;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    margin: 0.25em;
+    border: dotted 1px #a1a1a1;
+    border-radius: .5em;
+    padding: .5em 1em;
+    font-size: 1.15em;
+    background-color: #F8FCFD;
+  }
+</style>

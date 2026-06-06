@@ -1,0 +1,95 @@
+---
+import Layout from '../layouts/BaseLayout.astro';
+import { verifyAuth, redirectToLogin } from '../utils/auth';
+import { env } from "cloudflare:workers";
+
+// Check for authentication
+const isAuthenticated = verifyAuth(Astro.request);
+if (!isAuthenticated) {
+  return redirectToLogin();
+}
+
+// Get all items from the database
+let items: any[] = [];
+
+try {
+  const db = env.DB;
+
+  // ensure table exists
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      description TEXT
+    )
+  `).run();
+
+  // fetch items
+  const response = await db.prepare("SELECT * FROM items").all();
+  items = response.results || [];
+} catch (error) {
+  console.error("DB error:", error);
+}
+
+// Get the auth parameter for passing to API calls
+const authParam = new URL(Astro.request.url).searchParams.get('auth') || '';
+---
+
+<Layout pageTitle="Items Manager">
+  <div class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+    <header class="bg-white shadow rounded-lg mb-6 p-4">
+      <h1 class="text-3xl font-bold text-gray-800">Items Manager</h1>
+      <p class="text-gray-600">Manage your items database</p>
+      <div class="flex justify-between mt-2">
+        <a href={`/?auth=${authParam}`} class="inline-block text-indigo-600 hover:text-indigo-800">← Back to Home</a>
+        <div>
+          <button id="runTestBtn" class="inline-block text-green-600 hover:text-green-800 mr-4">Run DB Test</button>
+          <a href="/login" class="inline-block text-red-600 hover:text-red-800">Logout</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Add Item Form -->
+    <div class="bg-white shadow rounded-lg mb-6 p-4">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Add New Item</h2>
+      <form id="itemForm" class="space-y-4">
+        <!-- Form fields here -->
+      </form>
+    </div>
+
+    <!-- Items List -->
+    <div class="bg-white shadow rounded-lg">
+      <h2 class="text-xl font-semibold text-gray-800 p-4 border-b">Items List</h2>
+      
+      <div id="itemsList" class="divide-y divide-gray-200">
+        {items.map((item: any) => (
+          <div class="item-row p-4 flex justify-between items-start hover:bg-gray-50" data-id={item.id}>
+            <div>
+              <h3 class="text-lg font-medium text-gray-900">{item.name}</h3>
+              <p class="mt-1 text-sm text-gray-600">{item.description}</p>
+            </div>
+            <div class="flex space-x-2">
+              <button class="edit-btn px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 text-sm">
+                Edit
+              </button>
+              <button class="delete-btn px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-sm">
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+        {items.length === 0 && (
+          <div class="p-4 text-center text-gray-500">
+            No items found. Add your first item above.
+          </div>
+        )}
+      </div>
+    </div>
+
+    <!-- Client-side JavaScript for CRUD operations -->
+    <script define:vars={{ authParam }}>
+      // JavaScript code for handling forms, modals, and CRUD operations
+      // See full implementation in the source code
+    </script>
+  </div>
+</Layout>

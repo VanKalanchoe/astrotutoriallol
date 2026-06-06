@@ -1,9 +1,19 @@
 ---
+import { ui, type Lang } from "../i18n/ui";
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = "de" } = Astro.props as Props;
+
+const t = ui[lang];
 ---
+
 <div id="main-menu" class="nav-links">
-  <a href="/">Home</a>
-  <a href="/about/">About</a>
-  <a href="/blog/">Blog</a>
-  <a href="/tags/">Tags</a>
-  <a href="/calculator/">Calculator</a>
+  <a href={`/${lang}/`}>{t.nav.home}</a>
+  <a href={`/${lang}/about`}>{t.nav.about}</a>
+  <a href={`/${lang}/blog`}>{t.nav.blog}</a>
+  <a href={`/${lang}/tags`}>{t.nav.tags}</a>
+  <a href={`/${lang}/calculator`}>{t.nav.calculator}</a>
 </div>

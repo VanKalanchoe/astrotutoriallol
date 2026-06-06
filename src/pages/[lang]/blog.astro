@@ -1,13 +1,20 @@
 ---
 import { getCollection } from "astro:content";
-import BaseLayout from "../layouts/BaseLayout.astro";
-import BlogPost from "../components/BlogPost.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BlogPost from "../../components/BlogPost.astro";
 
-const pageTitle = "My Astro Learning Blog";
+import { getLang, t, langStaticPaths } from "../../i18n";
+
+export const getStaticPaths = langStaticPaths;
+
+const lang = getLang(Astro);
+const dict = t(lang);
+
+const pageTitle = dict.page.blogTitle;
 const allPosts = await getCollection("blog");
 ---
 
-<BaseLayout pageTitle={pageTitle}>
+<BaseLayout pageTitle={pageTitle} lang={lang}>
   <p>This is where I will post about my journey learning Astro.</p>
   <ul>
     {

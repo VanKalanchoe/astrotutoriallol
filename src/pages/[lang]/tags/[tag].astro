@@ -1,0 +1,48 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import BlogPost from "../../../components/BlogPost.astro";
+import { t } from "../../../i18n";
+
+export async function getStaticPaths() {
+  const allPosts = await getCollection("blog");
+
+  const tags = [...new Set(allPosts.flatMap(p => p.data.tags))];
+  const langs = ["en", "de"] as const;
+
+  return langs.flatMap((lang) =>
+    tags.map((tag) => ({
+      params: { lang, tag },
+    }))
+  );
+}
+
+const { lang, tag } = Astro.params as {
+  lang: "en" | "de";
+  tag: string;
+};
+
+const dict = t(lang);
+
+const allPosts = await getCollection("blog");
+
+const posts = allPosts.filter((p: any) =>
+  p.data.tags.includes(tag)
+);
+
+const pageTitle = `${dict.page.tagsTitle}: ${tag}`;
+---
+
+<BaseLayout pageTitle={pageTitle}>
+  <p>{dict.page.tagsTitle}: {tag}</p>
+
+  <ul>
+    {posts.map((post: any) => (
+      <BlogPost
+        date={post.data.pubDate.toLocaleDateString()}
+        url={`/${lang}/posts/${post.id}/`}
+        title={post.data.title}
+      />
+    ))}
+  </ul>
+</BaseLayout>

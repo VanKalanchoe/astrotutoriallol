@@ -1,0 +1,35 @@
+{
+	"compatibility_date": "2026-06-06",
+	"compatibility_flags": ["global_fetch_strictly_public"],
+	"name": "digital-dwarf",
+	"main": "@astrojs/cloudflare/entrypoints/server",
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS"
+	},
+	"observability": {
+		"enabled": true
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "vankvaultdb",
+			"database_id": "6d1284b8-b06f-4bd9-a6d3-2d0623215577"
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "SESSION",
+			"id": "a63a74e6aecd444bab65f2afc59b3057"
+		}
+	],
+	"r2_buckets": [],
+	"previews": {
+		"kv_namespaces": [
+			{
+				"binding": "SESSION",
+				"id": "a63a74e6aecd444bab65f2afc59b3057"
+			}
+		]
+	}
+}
